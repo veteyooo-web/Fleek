@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Проекты — Taskly{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-head">
+        <h1 class="page-title">Мои проекты</h1>
+        <form class="search-inline" method="get">
+            {% if current_status %}<input type="hidden" name="status" value="{{ current_status }}">{% endif %}
+            <input class="field" type="search" name="q" value="{{ search }}" placeholder="Поиск по проектам">
+            <button class="btn btn--ghost btn--sm" type="submit">Найти</button>
+        </form>
+    </div>
+
+    <div class="tabs">
+        <a class="tabs__link {% if not current_status %}is-active{% endif %}" href="{% url 'projects:list' %}">Все ({{ total }})</a>
+        {% for tab in status_tabs %}
+            <a class="tabs__link {% if current_status == tab.value %}is-active{% endif %}" href="?status={{ tab.value }}">
+                {{ tab.label }} ({{ tab.count }})
+            </a>
+        {% endfor %}
+    </div>
+
+    <div class="card">
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Проект</th>
+                <th>Роль</th>
+                <th>Партнёр</th>
+                <th>Цена</th>
+                <th>Срок</th>
+                <th>Статус</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for project in page_obj %}
+                <tr>
+                    <td><a href="{{ project.get_absolute_url }}">{{ project.title }}</a></td>
+                    <td class="muted">{% if project.customer_id == user.pk %}Заказчик{% else %}Исполнитель{% endif %}</td>
+                    <td>
+                        {% if project.customer_id == user.pk %}
+                            <a href="{% url 'users:profile' project.freelancer.pk %}">{{ project.freelancer.display_name }}</a>
+                        {% else %}
+                            <a href="{% url 'users:profile' project.customer.pk %}">{{ project.customer.display_name }}</a>
+                        {% endif %}
+                    </td>
+                    <td>{{ project.price|floatformat:0 }} ₽</td>
+                    <td>
+                        {{ project.deadline|date:"d.m.Y"|default:"—" }}
+                        {% if project.is_overdue %}<span class="danger">просрочен</span>{% endif %}
+                    </td>
+                    <td><span class="status status--{{ project.status }}">{{ project.get_status_display }}</span></td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="6" class="empty">Проектов нет. Появится автоматически, когда заказчик примет ваш отклик.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% include "partials/_pagination.html" %}
+</div>
+{% endblock %}

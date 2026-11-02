@@ -1,0 +1,22 @@
+<article class="card order-card">
+    <div class="order-card__head">
+        <h3 class="order-card__title">
+            <a href="{{ order.get_absolute_url }}">{{ order.title }}</a>
+        </h3>
+        <span class="status status--{{ order.status }}">{{ order.get_status_display }}</span>
+    </div>
+
+    <p class="order-card__desc">{{ order.description|truncatechars:170 }}</p>
+
+    <div class="order-card__tags">
+        {% if order.category %}<span class="tag">{{ order.category.name }}</span>{% endif %}
+        {% for skill in order.skill_list|slice:":4" %}<span class="tag tag--light">{{ skill }}</span>{% endfor %}
+    </div>
+
+    <div class="order-card__footer">
+        <span class="order-card__budget">{{ order.budget_display }}</span>
+        <span class="order-card__meta">
+            {% if order.deadline %}до {{ order.deadline|date:"d.m.Y" }} · {% endif %}откликов {{ order.applications_total|default:order.applications_count }}
+        </span>
+    </div>
+</article>

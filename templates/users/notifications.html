@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Уведомления — Taskly{% endblock %}
+
+{% block content %}
+<div class="container container--narrow">
+    <div class="page-head">
+        <h1 class="page-title">Уведомления</h1>
+        <div class="page-head__actions">
+            <a class="btn btn--ghost btn--sm {% if not only_unread %}is-active{% endif %}" href="{% url 'users:notifications' %}">Все</a>
+            <a class="btn btn--ghost btn--sm {% if only_unread %}is-active{% endif %}" href="?unread=1">Только непрочитанные</a>
+            <form method="post" action="{% url 'users:notifications_mark_all_read' %}">
+                {% csrf_token %}
+                <button class="btn btn--primary btn--sm" type="submit">Прочитать все</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="notifications">
+        {% for notification in page_obj %}
+            <article class="card notification {% if not notification.is_read %}notification--unread{% endif %}">
+                <div class="notification__head">
+                    <h2 class="notification__title">{{ notification.title }}</h2>
+                    <span class="muted small">{{ notification.created_at|date:"d.m.Y H:i" }}</span>
+                </div>
+                {% if notification.body %}<p class="notification__body">{{ notification.body|linebreaksbr }}</p>{% endif %}
+                <div class="notification__actions">
+                    {% if notification.link %}
+                        <a class="btn btn--sm btn--primary" href="{% url 'users:notification_mark_read' notification.pk %}">Перейти</a>
+                    {% endif %}
+                    {% if not notification.is_read %}
+                        <form method="post" action="{% url 'users:notification_mark_read' notification.pk %}">
+                            {% csrf_token %}
+                            <button class="btn btn--sm btn--ghost" type="submit">Отметить прочитанным</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </article>
+        {% empty %}
+            <p class="empty">Уведомлений нет.</p>
+        {% endfor %}
+    </div>
+
+    {% include "partials/_pagination.html" %}
+</div>
+{% endblock %}

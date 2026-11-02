@@ -1,0 +1,5 @@
+<span class="rating" title="Рейтинг {{ value|floatformat:2 }} из 5">
+    <span class="rating__bar"><span class="rating__fill" style="width:{% widthratio value 5 100 %}%"></span></span>
+    <span class="rating__value">{{ value|floatformat:1|default:"0.0" }}</span>
+    {% if count %}<span class="rating__count">({{ count }})</span>{% endif %}
+</span>

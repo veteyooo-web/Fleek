@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Регистрация в Taskly{% endblock %}
+
+{% block content %}
+<div class="container container--narrow">
+    <div class="card auth-card">
+        <h1 class="card__title">Создание аккаунта</h1>
+        <p class="muted">Выберите роль — от неё зависят доступные разделы кабинета.</p>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+                <div class="form-error form-error--box">
+                    {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+                </div>
+            {% endif %}
+            {% include "partials/_form_fields.html" %}
+            <button class="btn btn--primary btn--block" type="submit">Зарегистрироваться</button>
+        </form>
+
+        <p class="auth-card__alt">
+            Уже есть аккаунт? <a href="{% url 'login' %}">Войти</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

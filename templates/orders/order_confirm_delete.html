@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Удаление заказа — Taskly{% endblock %}
+
+{% block content %}
+<div class="container container--narrow">
+    <div class="card">
+        <h1 class="page-title">Удалить заказ «{{ order.title }}»?</h1>
+        <p class="muted">Вместе с заказом будут удалены все отклики. Отменить действие нельзя.</p>
+        <form method="post">
+            {% csrf_token %}
+            <div class="btn-row">
+                <button class="btn btn--danger" type="submit">Удалить заказ</button>
+                <a class="btn btn--ghost" href="{{ order.get_absolute_url }}">Отмена</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

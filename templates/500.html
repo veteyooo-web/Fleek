@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Ошибка сервера — Taskly{% endblock %}
+
+{% block content %}
+<div class="container container--narrow">
+    <div class="card" style="text-align: center;">
+        <h1 class="page-title">500 — внутренняя ошибка сервера</h1>
+        <p class="muted">Что-то пошло не так. Попробуйте обновить страницу или вернуться в кабинет.</p>
+        <div class="btn-row" style="justify-content: center;">
+            <a class="btn btn--primary" href="{% url 'users:dashboard' %}">Личный кабинет</a>
+            <a class="btn btn--ghost" href="{% url 'users:home' %}">На главную</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

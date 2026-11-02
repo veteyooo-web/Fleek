@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Страница не найдена — Taskly{% endblock %}
+
+{% block content %}
+<div class="container container--narrow">
+    <div class="card" style="text-align: center;">
+        <h1 class="page-title">404 — страница не найдена</h1>
+        <p class="muted">Возможно, заказ удалён или ссылка устарела.</p>
+        <div class="btn-row" style="justify-content: center;">
+            <a class="btn btn--primary" href="{% url 'orders:list' %}">Все заказы</a>
+            <a class="btn btn--ghost" href="{% url 'users:home' %}">На главную</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

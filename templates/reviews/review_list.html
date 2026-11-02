@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Отзывы — Taskly{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-head">
+        <h1 class="page-title">Отзывы о работе</h1>
+        <p class="muted">Что заказчики и фрилансеры пишут друг о друге.</p>
+    </div>
+
+    <div class="reviews reviews--page">
+        {% for review in page_obj %}
+            <article class="card review">
+                <header class="review__head">
+                    <a class="review__author" href="{% url 'users:profile' review.author.pk %}">{{ review.author.display_name }}</a>
+                    <span class="muted"> → </span>
+                    <a href="{% url 'users:profile' review.target.pk %}">{{ review.target.display_name }}</a>
+                    <span class="review__stars">{% for i in "12345"|make_list %}{% if forloop.counter <= review.rating %}<span class="star star--on"></span>{% else %}<span class="star"></span>{% endif %}{% endfor %}</span>
+                    <span class="muted small">{{ review.created_at|date:"d.m.Y" }}</span>
+                </header>
+                <p class="review__text">{{ review.comment|linebreaksbr }}</p>
+                <footer class="muted small">
+                    проект: <a href="{{ review.project.get_absolute_url }}">{{ review.project.title }}</a>
+                </footer>
+            </article>
+        {% empty %}
+            <p class="empty">Отзывов пока нет.</p>
+        {% endfor %}
+    </div>
+
+    {% include "partials/_pagination.html" %}
+</div>
+{% endblock %}

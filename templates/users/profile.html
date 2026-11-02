@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}{{ profile_user.display_name }} — профиль Taskly{% endblock %}
+
+{% block content %}
+<div class="container">
+    <section class="card profile-head">
+        <div class="profile-head__avatar">
+            {% if profile_user.avatar %}
+                <img class="avatar avatar--xl" src="{{ profile_user.avatar.url }}" alt="{{ profile_user.display_name }}">
+            {% else %}
+                <span class="avatar avatar--xl avatar--placeholder">{{ profile_user.display_name|first|upper }}</span>
+            {% endif %}
+        </div>
+
+        <div class="profile-head__info">
+            <h1 class="page-title">{{ profile_user.display_name }}</h1>
+            <p class="muted">
+                <span class="badge badge--role">{{ profile_user.get_role_display }}</span>
+                {% if profile_user.city %} · {{ profile_user.city }}{% endif %}
+                · на бирже с {{ profile_user.date_joined|date:"m.Y" }}
+            </p>
+
+            <div class="profile-head__rating">
+                {% include "partials/_rating.html" with value=profile_user.rating count=profile_user.reviews_count %}
+            </div>
+
+            {% if profile_user.bio %}<p class="profile-head__bio">{{ profile_user.bio|linebreaksbr }}</p>{% endif %}
+
+            {% if profile_user.skill_list %}
+                <div class="order-card__tags">
+                    {% for skill in profile_user.skill_list %}<span class="tag">{{ skill }}</span>{% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="profile-head__stats">
+                <div><strong>{{ completed_projects }}</strong> проектов завершено</div>
+                {% if profile_user.is_customer %}<div><strong>{{ open_orders }}</strong> открытых заказов</div>{% endif %}
+                {% if profile_user.telegram %}<div><a href="https://t.me/{{ profile_user.telegram|slugify }}" rel="noopener">@{{ profile_user.telegram }}</a></div>{% endif %}
+            </div>
+        </div>
+
+        <div class="profile-head__actions">
+            {% if user.is_authenticated and user != profile_user %}
+                <a class="btn btn--primary btn--sm" href="{% url 'messages:start' profile_user.pk %}">Написать сообщение</a>
+            {% endif %}
+            {% if user == profile_user %}
+                <a class="btn btn--ghost btn--sm" href="{% url 'users:profile_edit' %}">Редактировать</a>
+                <a class="btn btn--ghost btn--sm" href="{% url 'users:portfolio_create' %}">+ Работа в портфолио</a>
+            {% endif %}
+        </div>
+    </section>
+
+    <section class="section">
+        <h2 class="section__title">Портфолио</h2>
+        <div class="grid grid--portfolio">
+            {% for item in portfolio %}
+                <article class="card portfolio-card">
+                    {% if item.image %}
+                        <img class="portfolio-card__image" src="{{ item.image.url }}" alt="{{ item.title }}">
+                    {% else %}
+                        <div class="portfolio-card__image portfolio-card__image--empty">Нет изображения</div>
+                    {% endif %}
+                    <h3 class="portfolio-card__title">
+                        {% if item.link %}<a href="{{ item.link }}" rel="noopener nofollow">{{ item.title }}</a>{% else %}{{ item.title }}{% endif %}
+                    </h3>
+                    <p class="muted small">{{ item.description|truncatechars:140 }}</p>
+                    <div class="muted small">{{ item.created_at|date:"d.m.Y" }}</div>
+                    {% if user == profile_user %}
+                        <div class="btn-row">
+                            <a class="btn btn--sm btn--ghost" href="{% url 'users:portfolio_update' item.pk %}">Изменить</a>
+                            <a class="btn btn--sm btn--danger" href="{% url 'users:portfolio_delete' item.pk %}">Удалить</a>
+                        </div>
+                    {% endif %}
+                </article>
+            {% empty %}
+                <p class="empty">Портфолио пока пустое.</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="section__head">
+            <h2 class="section__title">Отзывы ({{ reviews_total }})</h2>
+        </div>
+        <div class="reviews">
+            {% for review in page_obj %}
+                <article class="card review">
+                    <header class="review__head">
+                        <a class="review__author" href="{% url 'users:profile' review.author.pk %}">{{ review.author.display_name }}</a>
+                        <span class="review__stars">{% for i in "12345"|make_list %}{% if forloop.counter <= review.rating %}<span class="star star--on"></span>{% else %}<span class="star"></span>{% endif %}{% endfor %}</span>
+                        <span class="muted small">{{ review.created_at|date:"d.m.Y" }}</span>
+                    </header>
+                    <p class="review__text">{{ review.comment|linebreaksbr }}</p>
+                    <footer class="muted small">
+                        проект: <a href="{{ review.project.get_absolute_url }}">{{ review.project.title }}</a>
+                        {% if user == review.author %}
+                            · <a href="{% url 'reviews:delete' review.pk %}">удалить отзыв</a>
+                        {% endif %}
+                    </footer>
+                </article>
+            {% empty %}
+                <p class="empty">Отзывов пока нет.</p>
+            {% endfor %}
+        </div>
+        {% include "partials/_pagination.html" %}
+    </section>
+</div>
+{% endblock %}

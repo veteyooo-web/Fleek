@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}{{ order.title }} — Taskly{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="breadcrumbs">
+        <a href="{% url 'orders:list' %}">Заказы</a>
+        {% if order.category %} / <a href="{{ order.category.get_absolute_url }}">{{ order.category.name }}</a>{% endif %}
+    </div>
+
+    <div class="columns">
+        <div class="column column--main">
+            <article class="card">
+                <div class="order-card__head">
+                    <h1 class="page-title">{{ order.title }}</h1>
+                    <span class="status status--{{ order.status }}">{{ order.get_status_display }}</span>
+                </div>
+
+                <dl class="details">
+                    <div class="details__row"><dt>Бюджет</dt><dd class="money">{{ order.budget_display }}</dd></div>
+                    <div class="details__row"><dt>Срок сдачи</dt><dd>{{ order.deadline|date:"d.m.Y"|default:"обсуждается" }}</dd></div>
+                    <div class="details__row"><dt>Категория</dt><dd>{{ order.category.name|default:"без категории" }}</dd></div>
+                    <div class="details__row"><dt>Откликов</dt><dd>{{ order.applications_total|default:order.applications_count }}</dd></div>
+                    <div class="details__row"><dt>Опубликован</dt><dd>{{ order.created_at|date:"d.m.Y H:i" }}</dd></div>
+                </dl>
+
+                <div class="prose">{{ order.description|linebreaksbr }}</div>
+
+                {% if order.skill_list %}
+                    <div class="order-card__tags">
+                        {% for skill in order.skill_list %}<span class="tag">{{ skill }}</span>{% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="btn-row btn-row--spaced">
+                    {% if is_owner %}
+                        <a class="btn btn--ghost btn--sm" href="{% url 'orders:update' order.pk %}">Редактировать</a>
+                        <a class="btn btn--ghost btn--sm" href="{% url 'orders:delete' order.pk %}">Удалить</a>
+                        <a class="btn btn--primary btn--sm" href="{% url 'applications:for_order' order.pk %}">Отклики ({{ order.applications_count }})</a>
+                    {% endif %}
+
+                    {% if user.is_authenticated %}
+                        <form method="post" action="{% url 'orders:toggle_favorite' order.pk %}">
+                            {% csrf_token %}
+                            <button class="btn btn--sm {% if is_favorite %}btn--primary{% else %}btn--ghost{% endif %}" type="submit">
+                                {% if is_favorite %}В избранном{% else %}В избранное{% endif %}
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+            </article>
+
+            {% if project %}
+                <div class="card card--highlight">
+                    <h2 class="card__title">По заказу создан проект</h2>
+                    <p class="muted">Исполнитель: {{ project.freelancer.display_name }} · цена {{ project.price|floatformat:0 }} ₽</p>
+                    <a class="btn btn--primary btn--sm" href="{{ project.get_absolute_url }}">Открыть проект</a>
+                </div>
+            {% endif %}
+
+            {% if is_owner %}
+                <section class="card">
+                    <h2 class="card__title">Отклики на заказ</h2>
+                    {% for application in applications %}
+                        <article class="application {% if application.is_pending %}application--new{% endif %}">
+                            <header class="application__head">
+                                <a href="{% url 'users:profile' application.freelancer.pk %}">{{ application.freelancer.display_name }}</a>
+                                <span class="status status--{{ application.status }}">{{ application.get_status_display }}</span>
+                            </header>
+                            <div class="application__meta">
+                                {{ application.price_display }} · {{ application.days }} дн. · {{ application.created_at|date:"d.m.Y" }}
+                            </div>
+                            <p class="application__letter">{{ application.cover_letter|linebreaksbr }}</p>
+                            {% if application.is_pending %}
+                                <div class="btn-row">
+                                    <form method="post" action="{% url 'applications:accept' application.pk %}">
+                                        {% csrf_token %}
+                                        <button class="btn btn--primary btn--sm" type="submit">Принять</button>
+                                    </form>
+                                    <form method="post" action="{% url 'applications:reject' application.pk %}">
+                                        {% csrf_token %}
+                                        <button class="btn btn--ghost btn--sm" type="submit">Отклонить</button>
+                                    </form>
+                                    <a class="btn btn--ghost btn--sm" href="{% url 'messages:start' application.freelancer.pk %}">Написать</a>
+                                </div>
+                            {% endif %}
+                        </article>
+                    {% empty %}
+                        <p class="empty">Откликов пока нет.</p>
+                    {% endfor %}
+                </section>
+            {% endif %}
+
+            {% if can_apply %}
+                <form class="card" method="post" action="{% url 'applications:create' order.pk %}" novalidate>
+                    {% csrf_token %}
+                    <h2 class="card__title">Отклик на заказ</h2>
+                    <p class="muted">Предложите цену и срок — заказчик увидит ваш отклик в списке.</p>
+                    {% include "partials/_form_fields.html" with form=application_form %}
+                    <button class="btn btn--primary" type="submit">Отправить отклик</button>
+                </form>
+            {% elif already_applied %}
+                <div class="card card--muted">
+                    <p>Вы уже откликнулись на этот заказ. Статус отклика виден в разделе <a href="{% url 'applications:my' %}">«Мои отклики»</a>.</p>
+                </div>
+            {% elif not user.is_authenticated %}
+                <div class="card card--muted">
+                    <p><a href="{% url 'login' %}">Войдите</a> как фрилансер, чтобы откликнуться на заказ.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <aside class="column column--side">
+            <div class="card">
+                <h2 class="card__title">Заказчик</h2>
+                <div class="profile-mini">
+                    {% if order.owner.avatar %}
+                        <img class="avatar avatar--md" src="{{ order.owner.avatar.url }}" alt="{{ order.owner.display_name }}">
+                    {% else %}
+                        <span class="avatar avatar--md avatar--placeholder">{{ order.owner.display_name|first|upper }}</span>
+                    {% endif %}
+                    <div>
+                        <a class="profile-mini__name" href="{% url 'users:profile' order.owner.pk %}">{{ order.owner.display_name }}</a>
+                        <div>{% include "partials/_rating.html" with value=order.owner.rating count=order.owner.reviews_count %}</div>
+                    </div>
+                </div>
+                {% if user.is_authenticated and user != order.owner %}
+                    <a class="btn btn--ghost btn--sm" href="{% url 'messages:start' order.owner.pk %}">Написать заказчику</a>
+                {% endif %}
+            </div>
+
+            <div class="card">
+                <h2 class="card__title">Похожие заказы</h2>
+                <ul class="list list--compact">
+                    {% for similar in similar_orders %}
+                        <li class="list__item">
+                            <a href="{{ similar.get_absolute_url }}">{{ similar.title|truncatechars:48 }}</a>
+                            <span class="muted small">{{ similar.budget_display }}</span>
+                        </li>
+                    {% empty %}
+                        <li class="empty">Похожих заказов нет.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </aside>
+    </div>
+</div>
+{% endblock %}

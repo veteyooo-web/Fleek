@@ -1,0 +1,107 @@
+{% load static %}<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Taskly — биржа фриланс-заказов{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="icon" href="{% static 'images/favicon.svg' %}" type="image/svg+xml">
+</head>
+<body class="{% block body_class %}{% endblock %}">
+
+<header class="header">
+    <div class="container header__inner">
+        <a class="logo" href="{% url 'users:home' %}">
+            <span class="logo__mark">T</span>
+            <span class="logo__text">Taskly</span>
+        </a>
+
+        <nav class="nav" id="main-nav">
+            <a class="nav__link" href="{% url 'orders:list' %}">Заказы</a>
+            <a class="nav__link" href="{% url 'orders:categories' %}">Категории</a>
+            <a class="nav__link" href="{% url 'reviews:latest' %}">Отзывы</a>
+            {% if user.is_authenticated %}
+                <a class="nav__link" href="{% url 'projects:list' %}">Проекты</a>
+                {% if user.is_customer or user.is_superuser %}
+                    <a class="nav__link" href="{% url 'orders:my' %}">Мои заказы</a>
+                    <a class="nav__link nav__link--accent" href="{% url 'orders:create' %}">+ Создать заказ</a>
+                {% endif %}
+                {% if user.is_freelancer and not user.is_superuser %}
+                    <a class="nav__link" href="{% url 'applications:my' %}">Мои отклики</a>
+                {% endif %}
+            {% endif %}
+        </nav>
+
+        <div class="header__actions">
+            {% if user.is_authenticated %}
+                <a class="chip" href="{% url 'users:notifications' %}" title="Уведомления">
+                    Уведомления
+                    {% if unread_notifications %}<span class="chip__count">{{ unread_notifications }}</span>{% endif %}
+                </a>
+                <a class="chip" href="{% url 'messages:inbox' %}" title="Сообщения">
+                    Сообщения
+                    {% if unread_messages %}<span class="chip__count">{{ unread_messages }}</span>{% endif %}
+                </a>
+                <details class="usermenu">
+                    <summary class="usermenu__summary">
+                        {% if user.avatar %}
+                            <img class="avatar avatar--sm" src="{{ user.avatar.url }}" alt="{{ user.display_name }}">
+                        {% else %}
+                            <span class="avatar avatar--sm avatar--placeholder">{{ user.display_name|first|upper }}</span>
+                        {% endif %}
+                        <span class="usermenu__name">{{ user.display_name }}</span>
+                    </summary>
+                    <div class="usermenu__body">
+                        <a href="{% url 'users:dashboard' %}">Личный кабинет</a>
+                        <a href="{% url 'users:profile' user.pk %}">Мой профиль</a>
+                        <a href="{% url 'users:profile_edit' %}">Редактировать профиль</a>
+                        <a href="{% url 'orders:favorites' %}">Избранные заказы</a>
+                        {% if user.is_staff %}<a href="{% url 'admin:index' %}">Админ-панель</a>{% endif %}
+                        <form method="post" action="{% url 'logout' %}">
+                            {% csrf_token %}
+                            <button type="submit" class="usermenu__logout">Выйти</button>
+                        </form>
+                    </div>
+                </details>
+            {% else %}
+                <a class="btn btn--ghost" href="{% url 'login' %}">Войти</a>
+                <a class="btn btn--primary" href="{% url 'users:register' %}">Регистрация</a>
+            {% endif %}
+        </div>
+    </div>
+</header>
+
+{% if messages %}
+    <div class="container">
+        {% for message in messages %}
+            <div class="alert alert--{{ message.tags|default:'info' }}">
+                <span class="alert__text">{{ message }}</span>
+                <button class="alert__close" type="button" data-close-alert aria-label="Закрыть">×</button>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<main class="main">
+    {% block content %}{% endblock %}
+</main>
+
+<footer class="footer">
+    <div class="container footer__inner">
+        <div>
+            <strong>Taskly</strong> — учебный проект биржи фриланс-заказов.
+        </div>
+        <nav class="footer__nav">
+            <a href="{% url 'orders:list' %}">Заказы</a>
+            <a href="{% url 'orders:categories' %}">Категории</a>
+            <a href="{% url 'reviews:latest' %}">Отзывы</a>
+            <a href="{% url 'users:register' %}">Регистрация</a>
+        </nav>
+        <div class="footer__copy">© {% now "Y" %} Igor / Taskly</div>
+    </div>
+</footer>
+
+<script src="{% static 'js/main.js' %}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

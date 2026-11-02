@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Категории заказов — Taskly{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-head">
+        <h1 class="page-title">Категории заказов</h1>
+        <p class="muted">Выберите направление, чтобы посмотреть открытые заказы.</p>
+    </div>
+
+    <div class="grid grid--categories">
+        {% for category in categories %}
+            <a class="card card--link category-card" href="{{ category.get_absolute_url }}">
+                <span class="category-card__name">{{ category.name }}</span>
+                <span class="category-card__count">
+                    открытых: {{ category.orders_open }} · всего: {{ category.orders_total }}
+                </span>
+                {% if category.description %}
+                    <span class="muted small">{{ category.description|truncatechars:90 }}</span>
+                {% endif %}
+            </a>
+        {% empty %}
+            <p class="empty">Категории ещё не заведены.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

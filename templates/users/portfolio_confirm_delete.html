@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Удаление работы — Taskly{% endblock %}
+
+{% block content %}
+<div class="container container--narrow">
+    <div class="card">
+        <h1 class="card__title">Удалить работу «{{ item.title }}»?</h1>
+        <p class="muted">Действие необратимо: работа исчезнет из портфолио.</p>
+        <form method="post">
+            {% csrf_token %}
+            <div class="btn-row">
+                <button class="btn btn--danger" type="submit">Удалить</button>
+                <a class="btn btn--ghost" href="{% url 'users:profile' user.pk %}">Отмена</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

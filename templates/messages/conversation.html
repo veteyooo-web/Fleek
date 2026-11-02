@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Диалог с {{ partner.display_name }} — Taskly{% endblock %}
+
+{% block content %}
+<div class="container container--narrow">
+    <div class="page-head">
+        <div class="profile-mini">
+            {% if partner.avatar %}
+                <img class="avatar avatar--md" src="{{ partner.avatar.url }}" alt="">
+            {% else %}
+                <span class="avatar avatar--md avatar--placeholder">{{ partner.display_name|first|upper }}</span>
+            {% endif %}
+            <div>
+                <a class="profile-mini__name" href="{% url 'users:profile' partner.pk %}">{{ partner.display_name }}</a>
+                <div class="muted small">{{ partner.get_role_display }}</div>
+            </div>
+        </div>
+        <a class="btn btn--ghost btn--sm" href="{% url 'messages:inbox' %}">Все диалоги</a>
+    </div>
+
+    <div class="card chat" id="chat">
+        {% for message in message_list %}
+            <div class="bubble {% if message.sender_id == user.pk %}bubble--out{% else %}bubble--in{% endif %}">
+                <div class="bubble__text">{{ message.content|linebreaksbr }}</div>
+                <div class="bubble__time">{{ message.created_at|date:"d.m H:i" }}</div>
+            </div>
+        {% empty %}
+            <p class="empty">Начните диалог — отправьте первое сообщение.</p>
+        {% endfor %}
+    </div>
+
+    <form class="card chat-form" method="post">
+        {% csrf_token %}
+        <label class="form-label" for="{{ form.content.id_for_label }}">Новое сообщение</label>
+        {{ form.content }}
+        {% for error in form.content.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+        <div class="btn-row">
+            <button class="btn btn--primary" type="submit">Отправить</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Прокрутка переписки к последнему сообщению.
+    var chat = document.getElementById('chat');
+    if (chat) { chat.scrollTop = chat.scrollHeight; }
+</script>
+{% endblock %}

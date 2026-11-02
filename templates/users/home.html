@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Taskly — находите фрилансеров и заказы{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="container hero__inner">
+        <div class="hero__content">
+            <h1 class="hero__title">Биржа фриланс-заказов <span class="accent">Taskly</span></h1>
+            <p class="hero__text">
+                Заказчики публикуют проекты и выбирают исполнителей из откликов с ценой и сроком.
+                Фрилансеры находят задачи и работают над проектами напрямую.
+            </p>
+            <div class="hero__actions">
+                {% if user.is_authenticated %}
+                    <a class="btn btn--primary btn--lg" href="{% url 'users:dashboard' %}">В личный кабинет</a>
+                    <a class="btn btn--ghost btn--lg" href="{% url 'orders:list' %}">Смотреть заказы</a>
+                {% else %}
+                    <a class="btn btn--primary btn--lg" href="{% url 'users:register' %}">Начать бесплатно</a>
+                    <a class="btn btn--ghost btn--lg" href="{% url 'orders:list' %}">Посмотреть заказы</a>
+                {% endif %}
+            </div>
+
+            <dl class="stats">
+                <div class="stats__item">
+                    <dt class="stats__label">Открытых заказов</dt>
+                    <dd class="stats__value">{{ stats.orders }}</dd>
+                </div>
+                <div class="stats__item">
+                    <dt class="stats__label">Фрилансеров</dt>
+                    <dd class="stats__value">{{ stats.freelancers }}</dd>
+                </div>
+                <div class="stats__item">
+                    <dt class="stats__label">Завершённых проектов</dt>
+                    <dd class="stats__value">{{ stats.projects }}</dd>
+                </div>
+                <div class="stats__item">
+                    <dt class="stats__label">Отзывов</dt>
+                    <dd class="stats__value">{{ stats.reviews }}</dd>
+                </div>
+            </dl>
+        </div>
+
+        <div class="hero__card card">
+            <h2 class="card__title">Как это работает</h2>
+            <ol class="steps">
+                <li><strong>Заказчик</strong> создаёт заказ: категория, бюджет, срок.</li>
+                <li><strong>Фрилансер</strong> отправляет отклик с ценой и сроком.</li>
+                <li>Заказчик принимает отклик — создаётся <strong>проект</strong>.</li>
+                <li>После сдачи стороны обмениваются <strong>отзывами</strong> и рейтингом.</li>
+            </ol>
+        </div>
+    </div>
+</section>
+
+<section class="container section">
+    <div class="section__head">
+        <h2 class="section__title">Категории</h2>
+        <a class="link-arrow" href="{% url 'orders:categories' %}">Все категории</a>
+    </div>
+    <div class="grid grid--categories">
+        {% for category in categories %}
+            <a class="card card--link category-card" href="{{ category.get_absolute_url }}">
+                <span class="category-card__name">{{ category.name }}</span>
+                <span class="category-card__count">{{ category.open_orders_count }} заказов</span>
+            </a>
+        {% empty %}
+            <p class="empty">Категории пока не добавлены.</p>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="container section">
+    <div class="section__head">
+        <h2 class="section__title">Свежие заказы</h2>
+        <a class="link-arrow" href="{% url 'orders:list' %}">Все заказы</a>
+    </div>
+    <div class="grid grid--orders">
+        {% for order in latest_orders %}
+            {% include "partials/_order_card.html" with order=order %}
+        {% empty %}
+            <p class="empty">Открытых заказов пока нет. {% if not user.is_authenticated %}<a href="{% url 'users:register' %}">Зарегистрируйтесь</a>, чтобы создать первый.{% endif %}</p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Виртуальные окружения
+.venv/
+venv/
+env/
+ENV/
+
+# Django
+*.sqlite3
+db.sqlite3
+db.sqlite3-journal
+staticfiles/
+media/
+!media/.gitkeep
+
+# Настройки окружения
+.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# ОС
+.DS_Store
+Thumbs.db
+
+# Логи
+*.log
+logs/

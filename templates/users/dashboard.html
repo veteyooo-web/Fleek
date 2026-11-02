@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Личный кабинет — Taskly{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-head">
+        <div>
+            <h1 class="page-title">Личный кабинет</h1>
+            <p class="muted">
+                {{ user.display_name }} · роль: {{ user.get_role_display }}
+                {% if user.rating %} · {% include "partials/_rating.html" with value=user.rating count=user.reviews_count %}{% endif %}
+            </p>
+        </div>
+        <div class="page-head__actions">
+            {% if user.is_customer or user.is_superuser %}
+                <a class="btn btn--primary" href="{% url 'orders:create' %}">Создать заказ</a>
+            {% endif %}
+            <a class="btn btn--ghost" href="{% url 'users:profile_edit' %}">Редактировать профиль</a>
+        </div>
+    </div>
+
+    <div class="grid grid--stats">
+        {% if mode == "customer" %}
+            <div class="card stat"><div class="stat__value">{{ orders_total }}</div><div class="stat__label">Всего заказов</div></div>
+            <div class="card stat"><div class="stat__value">{{ orders_open }}</div><div class="stat__label">Открытых заказов</div></div>
+            <div class="card stat"><div class="stat__value">{{ applications_pending }}</div><div class="stat__label">Откликов ждут решения</div></div>
+            <div class="card stat"><div class="stat__value">{{ projects_active }}</div><div class="stat__label">Проектов в работе</div></div>
+            <div class="card stat"><div class="stat__value">{{ budget_spent|floatformat:0 }} ₽</div><div class="stat__label">Потрачено на завершённые</div></div>
+        {% else %}
+            <div class="card stat"><div class="stat__value">{{ applications_sent_total }}</div><div class="stat__label">Отправлено откликов</div></div>
+            <div class="card stat"><div class="stat__value">{{ applications_pending }}</div><div class="stat__label">На рассмотрении</div></div>
+            <div class="card stat"><div class="stat__value">{{ applications_accepted }}</div><div class="stat__label">Принято</div></div>
+            <div class="card stat"><div class="stat__value">{{ freelancer_projects_active }}</div><div class="stat__label">Проектов в работе</div></div>
+            <div class="card stat"><div class="stat__value">{{ earned|floatformat:0 }} ₽</div><div class="stat__label">Заработано</div></div>
+        {% endif %}
+    </div>
+
+    <div class="columns">
+        <div class="column column--main">
+            {% if mode == "customer" %}
+                <section class="card">
+                    <div class="section__head">
+                        <h2 class="card__title">Последние заказы</h2>
+                        <a class="link-arrow" href="{% url 'orders:my' %}">Все мои заказы</a>
+                    </div>
+                    <table class="table">
+                        <thead>
+                        <tr><th>Заказ</th><th>Статус</th><th>Бюджет</th><th>Отклики</th></tr>
+                        </thead>
+                        <tbody>
+                        {% for order in orders %}
+                            <tr>
+                                <td><a href="{{ order.get_absolute_url }}">{{ order.title }}</a></td>
+                                <td><span class="status status--{{ order.status }}">{{ order.get_status_display }}</span></td>
+                                <td>{{ order.budget_display }}</td>
+                                <td>
+                                    <a href="{% url 'applications:for_order' order.pk %}">{{ order.applications.count }}</a>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="4" class="empty">Заказов пока нет.</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </section>
+
+                <section class="card">
+                    <div class="section__head">
+                        <h2 class="card__title">Новые отклики</h2>
+                        <a class="link-arrow" href="{% url 'projects:list' %}">Проекты</a>
+                    </div>
+                    <ul class="list">
+                        {% for application in applications_received %}
+                            <li class="list__item">
+                                <div>
+                                    <a href="{% url 'users:profile' application.freelancer.pk %}">{{ application.freelancer.display_name }}</a>
+                                    <span class="muted"> → </span>
+                                    <a href="{{ application.order.get_absolute_url }}">{{ application.order.title }}</a>
+                                    <div class="muted small">{{ application.created_at|date:"d.m.Y H:i" }} · {{ application.price_display }} · {{ application.days }} дн.</div>
+                                </div>
+                                <div class="list__actions">
+                                    {% if application.is_pending %}
+                                        <a class="btn btn--sm btn--ghost" href="{% url 'applications:for_order' application.order.pk %}">Решить</a>
+                                    {% endif %}
+                                </div>
+                            </li>
+                        {% empty %}
+                            <li class="empty">Откликов пока нет.</li>
+                        {% endfor %}
+                    </ul>
+                </section>
+
+                <section class="card">
+                    <div class="section__head">
+                        <h2 class="card__title">Активные проекты</h2>
+                    </div>
+                    <ul class="list">
+                        {% for project in projects %}
+                            <li class="list__item">
+                                <div>
+                                    <a href="{{ project.get_absolute_url }}">{{ project.title }}</a>
+                                    <div class="muted small">Исполнитель: {{ project.freelancer.display_name }} · {{ project.price|floatformat:0 }} ₽
+                                        {% if project.deadline %} · до {{ project.deadline|date:"d.m.Y" }}{% endif %}</div>
+                                </div>
+                                <span class="status status--{{ project.status }}">{{ project.get_status_display }}</span>
+                            </li>
+                        {% empty %}
+                            <li class="empty">Проектов нет.</li>
+                        {% endfor %}
+                    </ul>
+                </section>
+            {% else %}
+                <section class="card">
+                    <div class="section__head">
+                        <h2 class="card__title">Мои отклики</h2>
+                        <a class="link-arrow" href="{% url 'applications:my' %}">Все отклики</a>
+                    </div>
+                    <ul class="list">
+                        {% for application in applications_sent %}
+                            <li class="list__item">
+                                <div>
+                                    <a href="{{ application.order.get_absolute_url }}">{{ application.order.title }}</a>
+                                    <div class="muted small">{{ application.created_at|date:"d.m.Y" }} · {{ application.price_display }} · {{ application.days }} дн.</div>
+                                </div>
+                                <span class="status status--{{ application.status }}">{{ application.get_status_display }}</span>
+                            </li>
+                        {% empty %}
+                            <li class="empty">Вы ещё не отправляли отклики. <a href="{% url 'orders:list' %}">Найти заказ</a></li>
+                        {% endfor %}
+                    </ul>
+                </section>
+
+                <section class="card">
+                    <div class="section__head">
+                        <h2 class="card__title">Проекты в работе</h2>
+                        <a class="link-arrow" href="{% url 'projects:list' %}">Все проекты</a>
+                    </div>
+                    <ul class="list">
+                        {% for project in freelancer_projects %}
+                            <li class="list__item">
+                                <div>
+                                    <a href="{{ project.get_absolute_url }}">{{ project.title }}</a>
+                                    <div class="muted small">Заказчик: {{ project.customer.display_name }} · {{ project.price|floatformat:0 }} ₽
+                                        {% if project.deadline %} · до {{ project.deadline|date:"d.m.Y" }}{% endif %}
+                                        {% if project.is_overdue %} · <span class="danger">просрочен</span>{% endif %}</div>
+                                </div>
+                                <span class="status status--{{ project.status }}">{{ project.get_status_display }}</span>
+                            </li>
+                        {% empty %}
+                            <li class="empty">Активных проектов нет.</li>
+                        {% endfor %}
+                    </ul>
+                </section>
+            {% endif %}
+        </div>
+
+        <aside class="column column--side">
+            <div class="card">
+                <h2 class="card__title">Профиль</h2>
+                <div class="profile-mini">
+                    {% if user.avatar %}
+                        <img class="avatar avatar--lg" src="{{ user.avatar.url }}" alt="{{ user.display_name }}">
+                    {% else %}
+                        <span class="avatar avatar--lg avatar--placeholder">{{ user.display_name|first|upper }}</span>
+                    {% endif %}
+                    <div>
+                        <div class="profile-mini__name">{{ user.display_name }}</div>
+                        <div class="muted small">{{ user.get_role_display }}{% if user.city %} · {{ user.city }}{% endif %}</div>
+                    </div>
+                </div>
+                <div class="btn-row">
+                    <a class="btn btn--ghost btn--sm" href="{% url 'users:profile' user.pk %}">Моя страница</a>
+                    <a class="btn btn--ghost btn--sm" href="{% url 'users:password_change' %}">Пароль</a>
+                </div>
+            </div>
+
+            {% if mode != "customer" %}
+                <div class="card">
+                    <h2 class="card__title">Портфолио</h2>
+                    <p class="muted">Работ в портфолио: {{ portfolio_count }}</p>
+                    <a class="btn btn--primary btn--sm" href="{% url 'users:portfolio_create' %}">Добавить работу</a>
+                </div>
+            {% endif %}
+
+            <div class="card">
+                <h2 class="card__title">Уведомления</h2>
+                <p class="muted">Непрочитанных: {{ unread_notifications }}</p>
+                <a class="btn btn--ghost btn--sm" href="{% url 'users:notifications' %}">Открыть уведомления</a>
+            </div>
+
+            <div class="card">
+                <h2 class="card__title">Сообщения</h2>
+                <p class="muted">Непрочитанных писем: {{ unread_messages }}</p>
+                <a class="btn btn--ghost btn--sm" href="{% url 'messages:inbox' %}">Открыть переписку</a>
+            </div>
+
+            <div class="card">
+                <h2 class="card__title">Избранное</h2>
+                <a class="btn btn--ghost btn--sm" href="{% url 'orders:favorites' %}">Избранные заказы</a>
+            </div>
+        </aside>
+    </div>
+</div>
+{% endblock %}

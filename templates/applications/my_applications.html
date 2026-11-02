@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Мои отклики — Taskly{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-head">
+        <h1 class="page-title">Мои отклики</h1>
+        <p class="muted">Всего отправлено: {{ applications_total }}</p>
+        <a class="btn btn--ghost" href="{% url 'orders:list' %}?status=open">Найти заказы</a>
+    </div>
+
+    <div class="tabs">
+        <a class="tabs__link {% if not current_status %}is-active{% endif %}" href="{% url 'applications:my' %}">Все</a>
+        {% for value, label in statuses %}
+            <a class="tabs__link {% if current_status == value %}is-active{% endif %}" href="?status={{ value }}">{{ label }}</a>
+        {% endfor %}
+    </div>
+
+    <div class="card">
+        <table class="table">
+            <thead>
+            <tr><th>Заказ</th><th>Цена</th><th>Срок</th><th>Статус</th><th>Отправлен</th><th></th></tr>
+            </thead>
+            <tbody>
+            {% for application in page_obj %}
+                <tr>
+                    <td>
+                        <a href="{{ application.order.get_absolute_url }}">{{ application.order.title }}</a>
+                        <div class="muted small">{{ application.order.category.name|default:"без категории" }}</div>
+                    </td>
+                    <td>{{ application.price_display }}</td>
+                    <td>{{ application.days }} дн.</td>
+                    <td><span class="status status--{{ application.status }}">{{ application.get_status_display }}</span></td>
+                    <td class="muted">{{ application.created_at|date:"d.m.Y" }}</td>
+                    <td class="row-actions">
+                        {% if application.is_pending %}
+                            <form method="post" action="{% url 'applications:withdraw' application.pk %}" data-confirm="Отозвать ваш отклик?">
+                                {% csrf_token %}
+                                <button class="btn btn--sm btn--ghost" type="submit">Отозвать</button>
+                            </form>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="6" class="empty">Откликов нет.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% include "partials/_pagination.html" %}
+</div>
+{% endblock %}

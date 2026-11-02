@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Отзыв о {{ target.display_name }} — Taskly{% endblock %}
+
+{% block content %}
+<div class="container container--narrow">
+    <div class="card">
+        <h1 class="page-title">Отзыв о работе</h1>
+        <p class="muted">
+            Проект: <a href="{{ project.get_absolute_url }}">{{ project.title }}</a> ·
+            Оцениваете: <a href="{% url 'users:profile' target.pk %}">{{ target.display_name }}</a>
+        </p>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            <div class="form-row">
+                <label class="form-label">Оценка</label>
+                <div class="stars">
+                    {% for radio in form.rating %}
+                        <label class="stars__option">
+                            {{ radio.tag }}
+                            <span>{{ radio.choice_label }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+                {% for error in form.rating.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+            </div>
+
+            <div class="form-row">
+                <label class="form-label" for="{{ form.comment.id_for_label }}">{{ form.comment.label }}</label>
+                {{ form.comment }}
+                {% for error in form.comment.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+            </div>
+
+            <div class="btn-row">
+                <button class="btn btn--primary" type="submit">Опубликовать отзыв</button>
+                <a class="btn btn--ghost" href="{{ project.get_absolute_url }}">Отмена</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

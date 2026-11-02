@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Сообщения — Taskly{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-head">
+        <h1 class="page-title">Личные сообщения</h1>
+        <p class="muted">Диалогов: {{ total }}</p>
+    </div>
+
+    <div class="card">
+        <ul class="dialog-list">
+            {% for conversation in page_obj %}
+                <li class="dialog-list__item">
+                    <a class="dialog-list__link" href="{% url 'messages:detail' conversation.pk %}">
+                        <span class="avatar avatar--md avatar--placeholder">
+                            {{ conversation.partner.display_name|first|upper }}
+                        </span>
+                        <span class="dialog-list__body">
+                            <span class="dialog-list__top">
+                                <strong>{{ conversation.partner.display_name }}</strong>
+                                <span class="muted small">{{ conversation.updated_at|date:"d.m.Y H:i" }}</span>
+                            </span>
+                            <span class="muted small dialog-list__preview">
+                                {% with last=conversation.last_message %}
+                                    {% if last %}{{ last.sender.display_name }}: {{ last.content|truncatechars:70 }}{% else %}Сообщений пока нет{% endif %}
+                                {% endwith %}
+                            </span>
+                        </span>
+                        {% if conversation.unread %}<span class="chip__count">{{ conversation.unread }}</span>{% endif %}
+                    </a>
+                </li>
+            {% empty %}
+                <li class="empty">Диалогов нет. Написать можно с страницы профиля или из карточки отклика.</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    {% include "partials/_pagination.html" %}
+</div>
+{% endblock %}

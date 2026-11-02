@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Отклики на заказ — Taskly{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="breadcrumbs">
+        <a href="{% url 'orders:my' %}">Мои заказы</a> / <a href="{{ order.get_absolute_url }}">{{ order.title }}</a>
+    </div>
+
+    <div class="page-head">
+        <div>
+            <h1 class="page-title">Отклики на заказ «{{ order.title }}»</h1>
+            <p class="muted">
+                Всего откликов: {{ applications_total }} · ждут решения: {{ pending_count }} ·
+                бюджет: {{ order.budget_display }}
+            </p>
+        </div>
+        <a class="btn btn--ghost" href="{{ order.get_absolute_url }}">К заказу</a>
+    </div>
+
+    {% if order.is_open %}
+        <div class="card card--muted">
+            <p>Пока вы не примете отклик, заказ остаётся открытым и новые фрилансеры могут откликаться.</p>
+        </div>
+    {% endif %}
+
+    <div class="applications">
+        {% for application in page_obj %}
+            <article class="card application {% if application.is_pending %}application--new{% endif %}">
+                <header class="application__head">
+                    <div class="profile-mini">
+                        {% if application.freelancer.avatar %}
+                            <img class="avatar avatar--md" src="{{ application.freelancer.avatar.url }}" alt="">
+                        {% else %}
+                            <span class="avatar avatar--md avatar--placeholder">{{ application.freelancer.display_name|first|upper }}</span>
+                        {% endif %}
+                        <div>
+                            <a class="profile-mini__name" href="{% url 'users:profile' application.freelancer.pk %}">
+                                {{ application.freelancer.display_name }}
+                            </a>
+                            <div class="muted small">
+                                {{ application.freelancer.get_role_display }}
+                                {% if application.freelancer.city %} · {{ application.freelancer.city }}{% endif %}
+                            </div>
+                            {% include "partials/_rating.html" with value=application.freelancer.rating count=application.freelancer.reviews_count %}
+                        </div>
+                    </div>
+                    <span class="status status--{{ application.status }}">{{ application.get_status_display }}</span>
+                </header>
+
+                <div class="application__meta">
+                    Цена: <strong>{{ application.price_display }}</strong> ·
+                    Срок: <strong>{{ application.days }} дн.</strong> ·
+                    Отправлен: {{ application.created_at|date:"d.m.Y H:i" }}
+                </div>
+
+                <p class="application__letter">{{ application.cover_letter|linebreaksbr }}</p>
+
+                {% if application.freelancer.skill_list %}
+                    <div class="order-card__tags">
+                        {% for skill in application.freelancer.skill_list|slice:":6" %}<span class="tag tag--light">{{ skill }}</span>{% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="btn-row">
+                    {% if application.is_pending %}
+                        <form method="post" action="{% url 'applications:accept' application.pk %}">
+                            {% csrf_token %}
+                            <button class="btn btn--primary btn--sm" type="submit">Принять и создать проект</button>
+                        </form>
+                        <form method="post" action="{% url 'applications:reject' application.pk %}">
+                            {% csrf_token %}
+                            <button class="btn btn--ghost btn--sm" type="submit">Отклонить</button>
+                        </form>
+                    {% endif %}
+                    <a class="btn btn--ghost btn--sm" href="{% url 'messages:start' application.freelancer.pk %}">Написать</a>
+                </div>
+            </article>
+        {% empty %}
+            <p class="empty">Откликов на этот заказ пока нет.</p>
+        {% endfor %}
+    </div>
+
+    {% include "partials/_pagination.html" %}
+</div>
+{% endblock %}

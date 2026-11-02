@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Мои заказы — Taskly{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-head">
+        <h1 class="page-title">Мои заказы и история</h1>
+        <a class="btn btn--primary" href="{% url 'orders:create' %}">Создать заказ</a>
+    </div>
+
+    <div class="tabs">
+        <a class="tabs__link {% if not current_status %}is-active{% endif %}" href="{% url 'orders:my' %}">Все</a>
+        {% for value, label in statuses %}
+            <a class="tabs__link {% if current_status == value %}is-active{% endif %}" href="?status={{ value }}">{{ label }}</a>
+        {% endfor %}
+    </div>
+
+    <div class="card">
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Заказ</th>
+                <th>Категория</th>
+                <th>Статус</th>
+                <th>Бюджет</th>
+                <th>Срок</th>
+                <th>Отклики</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for order in page_obj %}
+                <tr>
+                    <td><a href="{{ order.get_absolute_url }}">{{ order.title }}</a></td>
+                    <td class="muted">{{ order.category.name|default:"—" }}</td>
+                    <td><span class="status status--{{ order.status }}">{{ order.get_status_display }}</span></td>
+                    <td>{{ order.budget_display }}</td>
+                    <td>{{ order.deadline|date:"d.m.Y"|default:"—" }}</td>
+                    <td>{{ order.applications_total|default:0 }}</td>
+                    <td class="row-actions">
+                        <a class="btn btn--sm btn--ghost" href="{% url 'applications:for_order' order.pk %}">Отклики</a>
+                        <a class="btn btn--sm btn--ghost" href="{% url 'orders:update' order.pk %}">Изменить</a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="7" class="empty">Заказов нет.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% include "partials/_pagination.html" %}
+</div>
+{% endblock %}

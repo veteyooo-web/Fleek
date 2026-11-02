@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Избранные заказы — Taskly{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-head">
+        <h1 class="page-title">Избранные заказы</h1>
+        <a class="btn btn--ghost" href="{% url 'orders:list' %}">Все заказы</a>
+    </div>
+
+    <div class="grid grid--orders">
+        {% for order in page_obj %}
+            {% include "partials/_order_card.html" with order=order %}
+        {% empty %}
+            <p class="empty">В избранном пока пусто. Добавляйте заказы кнопкой «В избранное» на странице заказа.</p>
+        {% endfor %}
+    </div>
+
+    {% include "partials/_pagination.html" %}
+</div>
+{% endblock %}

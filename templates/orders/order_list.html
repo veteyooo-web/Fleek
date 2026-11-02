@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Заказы — Taskly{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-head">
+        <div>
+            <h1 class="page-title">Фриланс-заказы</h1>
+            <p class="muted">Найдено заказов: {{ total }}</p>
+        </div>
+        {% if user.is_customer or user.is_superuser %}
+            <a class="btn btn--primary" href="{% url 'orders:create' %}">Создать заказ</a>
+        {% endif %}
+    </div>
+
+    <form class="card filters" method="get">
+        <div class="filters__grid">
+            <div class="filter">
+                <label class="form-label" for="{{ form.q.id_for_label }}">Поиск</label>
+                {{ form.q }}
+            </div>
+            <div class="filter">
+                <label class="form-label" for="{{ form.category.id_for_label }}">Категория</label>
+                {{ form.category }}
+            </div>
+            <div class="filter">
+                <label class="form-label" for="{{ form.status.id_for_label }}">Статус</label>
+                {{ form.status }}
+            </div>
+            <div class="filter">
+                <label class="form-label" for="{{ form.min_budget.id_for_label }}">Бюджет от</label>
+                {{ form.min_budget }}
+            </div>
+            <div class="filter">
+                <label class="form-label" for="{{ form.max_budget.id_for_label }}">Бюджет до</label>
+                {{ form.max_budget }}
+            </div>
+            <div class="filter">
+                <label class="form-label" for="{{ form.sort.id_for_label }}">Сортировка</label>
+                {{ form.sort }}
+            </div>
+        </div>
+        <div class="filters__actions">
+            <button class="btn btn--primary" type="submit">Применить</button>
+            {% if is_filtered %}<a class="btn btn--ghost" href="{% url 'orders:list' %}">Сбросить фильтры</a>{% endif %}
+        </div>
+    </form>
+
+    <div class="grid grid--orders">
+        {% for order in page_obj %}
+            {% include "partials/_order_card.html" with order=order %}
+        {% empty %}
+            <p class="empty">По вашему запросу заказов не найдено. Попробуйте изменить фильтры.</p>
+        {% endfor %}
+    </div>
+
+    {% include "partials/_pagination.html" %}
+</div>
+{% endblock %}

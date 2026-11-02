@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}{{ project.title }} — проект{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="breadcrumbs">
+        <a href="{% url 'projects:list' %}">Мои проекты</a> / {{ project.title|truncatechars:50 }}
+    </div>
+
+    <div class="columns">
+        <div class="column column--main">
+            <article class="card">
+                <div class="order-card__head">
+                    <h1 class="page-title">{{ project.title }}</h1>
+                    <span class="status status--{{ project.status }}">{{ project.get_status_display }}</span>
+                </div>
+
+                <dl class="details">
+                    <div class="details__row"><dt>Заказчик</dt><dd><a href="{% url 'users:profile' project.customer.pk %}">{{ project.customer.display_name }}</a></dd></div>
+                    <div class="details__row"><dt>Исполнитель</dt><dd><a href="{% url 'users:profile' project.freelancer.pk %}">{{ project.freelancer.display_name }}</a></dd></div>
+                    <div class="details__row"><dt>Цена</dt><dd class="money">{{ project.price|floatformat:0 }} ₽</dd></div>
+                    <div class="details__row">
+                        <dt>Срок сдачи</dt>
+                        <dd>
+                            {{ project.deadline|date:"d.m.Y"|default:"не указан" }}
+                            {% if project.days_left != None %}
+                                {% if project.is_overdue %}<span class="danger">просрочен на {{ project.days_left|cut:"-" }} дн.</span>
+                                {% else %}<span class="muted">осталось {{ project.days_left }} дн.</span>{% endif %}
+                            {% endif %}
+                        </dd>
+                    </div>
+                    <div class="details__row"><dt>Начат</dt><dd>{{ project.started_at|date:"d.m.Y H:i" }}</dd></div>
+                    {% if project.completed_at %}
+                        <div class="details__row"><dt>Завершён</dt><dd>{{ project.completed_at|date:"d.m.Y H:i" }}</dd></div>
+                    {% endif %}
+                    <div class="details__row"><dt>Исходный заказ</dt><dd><a href="{{ project.order.get_absolute_url }}">{{ project.order.title }}</a></dd></div>
+                </dl>
+
+                <h2 class="card__title">Описание</h2>
+                <div class="prose">{{ project.description|linebreaksbr }}</div>
+
+                {% if project.summary %}
+                    <h2 class="card__title">Итог работы</h2>
+                    <div class="prose">{{ project.summary|linebreaksbr }}</div>
+                {% endif %}
+            </article>
+
+            {% if complete_form %}
+                <form class="card card--highlight" method="post" action="{% url 'projects:complete' project.pk %}">
+                    {% csrf_token %}
+                    <h2 class="card__title">Завершить проект</h2>
+                    <p class="muted">Опишите результат — заказчик увидит итог и сможет оставить отзыв.</p>
+                    <label class="form-label" for="{{ complete_form.summary.id_for_label }}">{{ complete_form.summary.label }}</label>
+                    {{ complete_form.summary }}
+                    {% for error in complete_form.summary.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+                    <button class="btn btn--primary" type="submit">Завершить проект</button>
+                </form>
+            {% endif %}
+
+            {% if cancel_form %}
+                <form class="card" method="post" action="{% url 'projects:cancel' project.pk %}" data-confirm="Отменить проект? Заказ тоже будет закрыт.">
+                    {% csrf_token %}
+                    <h2 class="card__title">Отменить проект</h2>
+                    <label class="form-label" for="{{ cancel_form.reason.id_for_label }}">{{ cancel_form.reason.label }}</label>
+                    {{ cancel_form.reason }}
+                    <button class="btn btn--danger btn--sm" type="submit">Отменить проект и заказ</button>
+                </form>
+            {% endif %}
+
+            <section class="card">
+                <h2 class="card__title">Отзывы по проекту</h2>
+                {% for review in reviews %}
+                    <article class="review">
+                        <header class="review__head">
+                            <a href="{% url 'users:profile' review.author.pk %}">{{ review.author.display_name }}</a>
+                            <span class="muted small">о {{ review.target.display_name }} · {{ review.rating }} из 5</span>
+                        </header>
+                        <p class="review__text">{{ review.comment|linebreaksbr }}</p>
+                    </article>
+                {% empty %}
+                    <p class="empty">Отзывов по проекту пока нет.</p>
+                {% endfor %}
+            </section>
+        </div>
+
+        <aside class="column column--side">
+            <div class="card">
+                <h2 class="card__title">Действия</h2>
+                <div class="btn-col">
+                    <a class="btn btn--primary btn--sm" href="{% url 'messages:start' partner.pk %}">Написать {{ partner.display_name }}</a>
+                    {% if can_review %}
+                        <a class="btn btn--ghost btn--sm" href="{% url 'reviews:create' project.pk %}">Оставить отзыв</a>
+                    {% endif %}
+                    <a class="btn btn--ghost btn--sm" href="{{ project.order.get_absolute_url }}">Страница заказа</a>
+                </div>
+            </div>
+
+            {% if application %}
+                <div class="card">
+                    <h2 class="card__title">Принятый отклик</h2>
+                    <p class="muted small">Автор: {{ application.freelancer.display_name }}</p>
+                    <div class="application__meta">
+                        {{ application.price_display }} · {{ application.days }} дн. · {{ application.created_at|date:"d.m.Y" }}
+                    </div>
+                    <p class="application__letter">{{ application.cover_letter|linebreaksbr }}</p>
+                </div>
+            {% endif %}
+
+            <div class="card">
+                <h2 class="card__title">Партнёр</h2>
+                <div class="profile-mini">
+                    {% if partner.avatar %}
+                        <img class="avatar avatar--md" src="{{ partner.avatar.url }}" alt="">
+                    {% else %}
+                        <span class="avatar avatar--md avatar--placeholder">{{ partner.display_name|first|upper }}</span>
+                    {% endif %}
+                    <div>
+                        <a class="profile-mini__name" href="{% url 'users:profile' partner.pk %}">{{ partner.display_name }}</a>
+                        {% include "partials/_rating.html" with value=partner.rating count=partner.reviews_count %}
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+</div>
+{% endblock %}
